@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: ${COMPOSE_DB_NAME}
+    volumes:
+      - ${DB_DATA_DIR}:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - ${PORT_MYSQL}:3306
+    networks:
+      - trax-network
+    restart: ${RESTART_SERVICES}
+
+  trax:
+    container_name: ${COMPOSE_PROJECT_NAME}
+    image: ${COMPOSE_TRAX_NAME}
+    depends_on:
+      - db
+    build:
+      context: ${DOCKER_BUILD_CONTEXT}
+      dockerfile: ${DOCKER_BUILD_FILE}
+    ports:
+      - ${LISTEN_ITF}:${PORT_TRAX_HTTP}:80
+    networks:
+      - trax-network
+    restart: ${RESTART_SERVICES}
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: ${RESTART_SERVICES}
+    ports:
+      - ${PORT_PHPMYADMIN}:80
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - trax-network
+
+networks:
+  trax-network:
